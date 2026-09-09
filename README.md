@@ -14,7 +14,7 @@ Projeto acadêmico dividido em 3 camadas ao longo das entregas:
 
 ## Links
 
-- **Board do projeto:** https://trello.com/... (preencher)
+- **Board do projeto:** https://github.com/users/TioSandei/projects/2
 - **Vídeo da 1ª AC:** https://... (preencher)
 
 ---
