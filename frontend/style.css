@@ -1,0 +1,53 @@
+/* Estilos próprios do projeto.
+   O Bootstrap já cuida da maior parte; aqui só os ajustes finos. */
+
+body {
+  background-color: #f7f7f9;
+}
+
+/* Card do anúncio: imagem sempre no mesmo tamanho */
+.card-anuncio .foto {
+  height: 180px;
+  object-fit: cover;
+  background-color: #e9ecef;
+}
+
+.card-anuncio {
+  transition: transform .12s ease, box-shadow .12s ease;
+  cursor: pointer;
+}
+
+.card-anuncio:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .12);
+}
+
+/* Selo de "VENDIDO" por cima da foto */
+.card-anuncio.vendido .foto {
+  filter: grayscale(1) opacity(.6);
+}
+
+.selo-vendido {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  transform: rotate(-6deg);
+}
+
+.preco {
+  font-weight: 700;
+  color: #198754;
+}
+
+.preco.troca {
+  color: #6f42c1;
+}
+
+/* Imagem grande dentro do modal de detalhe */
+#modal-detalhe .foto-detalhe {
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+  border-radius: .5rem;
+  background-color: #e9ecef;
+}

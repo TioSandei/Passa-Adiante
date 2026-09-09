@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Passa Adiante — Sebo Virtual da Faculdade</title>
+
+  <!-- Bootstrap -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet" />
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+    rel="stylesheet" />
+
+  <link href="style.css" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ================= NAVBAR ================= -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="#" data-view="feed">
+        <i class="bi bi-book-half"></i> Passa Adiante
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="menu">
+        <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+          <li class="nav-item">
+            <a class="nav-link" href="#" data-view="feed"><i class="bi bi-shop"></i> Anúncios</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" data-view="meus"><i class="bi bi-person-badge"></i> Meus anúncios</a>
+          </li>
+          <li class="nav-item">
+            <button class="btn btn-success btn-sm" data-view="novo">
+              <i class="bi bi-plus-lg"></i> Anunciar
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container my-4">
+
+    <!-- ================= VIEW: FEED ================= -->
+    <section id="view-feed">
+      <div class="p-4 mb-4 rounded-3 bg-body-tertiary border">
+        <h1 class="h3 mb-1">Sebo virtual da faculdade</h1>
+        <p class="text-secondary mb-0">
+          Compre, venda e troque livros, apostilas e materiais com outros alunos.
+        </p>
+      </div>
+
+      <!-- Busca e filtros -->
+      <div class="row g-2 mb-4">
+        <div class="col-12 col-md-5">
+          <input id="busca" type="text" class="form-control"
+                 placeholder="Buscar por título, autor..." />
+        </div>
+        <div class="col-6 col-md-3">
+          <select id="filtro-categoria" class="form-select">
+            <option value="">Todas as categorias</option>
+            <option>Livro</option>
+            <option>Apostila</option>
+            <option>Eletrônico</option>
+            <option>Material</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-3">
+          <select id="filtro-curso" class="form-select">
+            <option value="">Todos os cursos</option>
+            <option>ADS</option>
+            <option>Engenharia</option>
+            <option>Direito</option>
+            <option>Administração</option>
+            <option>Medicina</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-1 d-grid">
+          <button id="limpar-filtros" class="btn btn-outline-secondary" title="Limpar filtros">
+            <i class="bi bi-x-circle"></i>
+          </button>
+        </div>
+      </div>
+
+      <p id="contador" class="text-secondary small"></p>
+
+      <!-- Onde os cards de anúncio são desenhados pelo JavaScript -->
+      <div id="lista-anuncios" class="row g-3"></div>
+
+      <div id="vazio" class="text-center text-secondary py-5 d-none">
+        <i class="bi bi-search fs-1"></i>
+        <p class="mt-2">Nenhum anúncio encontrado.</p>
+      </div>
+    </section>
+
+    <!-- ================= VIEW: MEUS ANÚNCIOS ================= -->
+    <section id="view-meus" class="d-none">
+      <h1 class="h3 mb-3">Meus anúncios</h1>
+      <p class="text-secondary">
+        Anúncios que você criou. Aqui dá para marcar como vendido ou apagar.
+      </p>
+      <div id="lista-meus" class="row g-3"></div>
+      <div id="meus-vazio" class="text-center text-secondary py-5 d-none">
+        <i class="bi bi-inbox fs-1"></i>
+        <p class="mt-2">Você ainda não criou nenhum anúncio.</p>
+      </div>
+    </section>
+
+    <!-- ================= VIEW: NOVO ANÚNCIO ================= -->
+    <section id="view-novo" class="d-none">
+      <h1 class="h3 mb-3">Novo anúncio</h1>
+
+      <form id="form-anuncio" class="row g-3" novalidate>
+        <div class="col-12">
+          <label class="form-label">Título *</label>
+          <input name="titulo" type="text" class="form-control" required
+                 placeholder="Ex.: Cálculo A — Diva Fleming" />
+          <div class="invalid-feedback">Informe um título.</div>
+        </div>
+
+        <div class="col-12 col-md-4">
+          <label class="form-label">Preço (R$) *</label>
+          <input name="preco" type="number" min="0" step="0.01" class="form-control" required
+                 placeholder="0,00" />
+          <div class="invalid-feedback">Informe um preço (use 0 para troca/doação).</div>
+        </div>
+
+        <div class="col-6 col-md-4">
+          <label class="form-label">Categoria *</label>
+          <select name="categoria" class="form-select" required>
+            <option value="">Selecione...</option>
+            <option>Livro</option>
+            <option>Apostila</option>
+            <option>Eletrônico</option>
+            <option>Material</option>
+          </select>
+          <div class="invalid-feedback">Escolha uma categoria.</div>
+        </div>
+
+        <div class="col-6 col-md-4">
+          <label class="form-label">Curso *</label>
+          <select name="curso" class="form-select" required>
+            <option value="">Selecione...</option>
+            <option>ADS</option>
+            <option>Engenharia</option>
+            <option>Direito</option>
+            <option>Administração</option>
+            <option>Medicina</option>
+          </select>
+          <div class="invalid-feedback">Escolha um curso.</div>
+        </div>
+
+        <div class="col-6 col-md-4">
+          <label class="form-label">Estado do item *</label>
+          <select name="estado" class="form-select" required>
+            <option value="">Selecione...</option>
+            <option>Novo</option>
+            <option>Seminovo</option>
+            <option>Usado</option>
+            <option>Bem usado</option>
+          </select>
+          <div class="invalid-feedback">Escolha o estado do item.</div>
+        </div>
+
+        <div class="col-12 col-md-8">
+          <label class="form-label">URL da foto</label>
+          <input name="foto" type="url" class="form-control"
+                 placeholder="https://... (opcional)" />
+          <div class="form-text">Sem foto? Deixe em branco que usamos uma imagem padrão.</div>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Descrição *</label>
+          <textarea name="descricao" rows="4" class="form-control" required
+                    placeholder="Conte o estado do material, se tem anotações, marca, etc."></textarea>
+          <div class="invalid-feedback">Escreva uma descrição.</div>
+        </div>
+
+        <div class="col-12 col-md-6">
+          <label class="form-label">Seu nome *</label>
+          <input name="autor" type="text" class="form-control" required placeholder="Como te chamar" />
+          <div class="invalid-feedback">Informe seu nome.</div>
+        </div>
+
+        <div class="col-12 col-md-6">
+          <label class="form-label">Contato (WhatsApp / e-mail) *</label>
+          <input name="contato" type="text" class="form-control" required placeholder="(00) 00000-0000" />
+          <div class="invalid-feedback">Informe um contato.</div>
+        </div>
+
+        <div class="col-12 d-flex gap-2">
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-check-lg"></i> Publicar anúncio
+          </button>
+          <button type="button" class="btn btn-outline-secondary" data-view="feed">Cancelar</button>
+        </div>
+      </form>
+    </section>
+
+  </main>
+
+  <!-- ================= MODAL: DETALHE DO ANÚNCIO ================= -->
+  <div class="modal fade" id="modal-detalhe" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content" id="modal-detalhe-conteudo">
+        <!-- preenchido pelo JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <footer class="text-center text-secondary small py-4">
+    Passa Adiante · Projeto acadêmico · 1ª AC (Front-end) · Dados salvos no navegador
+  </footer>
+
+  <!-- Toast de feedback -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="toast" class="toast align-items-center text-bg-success border-0" role="alert">
+      <div class="d-flex">
+        <div class="toast-body" id="toast-msg"></div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
