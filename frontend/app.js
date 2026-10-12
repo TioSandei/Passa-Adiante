@@ -147,6 +147,8 @@ for (let i = 0; i < botoesDeNavegacao.length; i++) {
   botoesDeNavegacao[i].addEventListener("click", function (evento) {
     evento.preventDefault();
     const nomeDaTela = this.dataset.view; // ex.: "feed", "meus", "novo"
+    // Clicou em "Anunciar": formulário vazio, no modo de criar
+    if (nomeDaTela === "novo") limparFormulario();
     mostrarView(nomeDaTela);
   });
 }
@@ -183,6 +185,8 @@ function cardAnuncio(anuncio, comBotoes) {
       '<div class="d-flex gap-2 mt-2">' +
       '  <button class="btn btn-sm btn-outline-success flex-grow-1" data-acao="vender" data-id="' +
       anuncio.id + '" data-vendido="' + anuncio.vendido + '">' + textoBotao + "</button>" +
+      '  <button class="btn btn-sm btn-outline-primary" data-acao="editar" data-id="' +
+      anuncio.id + '" title="Editar"><i class="bi bi-pencil"></i></button>' +
       '  <button class="btn btn-sm btn-outline-danger" data-acao="apagar" data-id="' +
       anuncio.id + '"><i class="bi bi-trash"></i></button>' +
       "</div>";
@@ -311,6 +315,14 @@ document.getElementById("lista-meus").addEventListener("click", async function (
   const id = botao.dataset.id;
 
   try {
+    if (botao.dataset.acao === "editar") {
+      // Busca o anúncio no servidor e abre o formulário já preenchido
+      const anuncio = await api("GET", "/api/anuncios/" + id);
+      preencherFormulario(anuncio);
+      mostrarView("novo");
+      return;
+    }
+
     if (botao.dataset.acao === "vender") {
       const estavaVendido = botao.dataset.vendido === "true";
       // PUT só com o campo que muda: inverte true/false
@@ -376,10 +388,39 @@ async function abrirDetalhe(id) {
 }
 
 /* ============================================================
-   PASSO 8 - Formulário de novo anúncio
+   PASSO 8 - Formulário de anúncio (criar e editar)
+   O mesmo formulário serve para os dois:
+   - idEmEdicao = null  -> cria um anúncio novo (POST)
+   - idEmEdicao = 5     -> edita o anúncio 5 (PUT)
    ============================================================ */
 
 const form = document.getElementById("form-anuncio");
+let idEmEdicao = null;
+
+// Deixa o formulário vazio, no modo "criar"
+function limparFormulario() {
+  idEmEdicao = null;
+  form.reset();
+  form.classList.remove("was-validated");
+  document.getElementById("titulo-formulario").textContent = "Novo anúncio";
+  document.getElementById("botao-publicar").innerHTML =
+    '<i class="bi bi-check-lg"></i> Publicar anúncio';
+}
+
+// Coloca os dados de um anúncio no formulário, no modo "editar"
+function preencherFormulario(anuncio) {
+  limparFormulario();
+  idEmEdicao = anuncio.id;
+  form.titulo.value = anuncio.titulo;
+  form.preco.value = anuncio.preco;
+  form.categoria.value = anuncio.categoria;
+  form.curso.value = anuncio.curso;
+  form.estado.value = anuncio.estado;
+  form.descricao.value = anuncio.descricao;
+  document.getElementById("titulo-formulario").textContent = "Editar anúncio";
+  document.getElementById("botao-publicar").innerHTML =
+    '<i class="bi bi-check-lg"></i> Salvar alterações';
+}
 
 form.addEventListener("submit", async function (evento) {
   evento.preventDefault();
@@ -391,29 +432,35 @@ form.addEventListener("submit", async function (evento) {
   }
 
   try {
-    // 1º) Se escolheu uma foto, envia ela primeiro e pega o endereço
-    let urlDaFoto = "";
-    const arquivo = form.foto.files[0];
-    if (arquivo !== undefined) {
-      urlDaFoto = await enviarFoto(arquivo);
-    }
-
-    // 2º) Envia os dados do anúncio. Autor e contato o servidor
-    //     descobre sozinho pelo token de quem está logado.
-    await api("POST", "/api/anuncios", {
+    // Dados do anúncio. Autor e contato o servidor descobre
+    // sozinho pelo token de quem está logado.
+    const dados = {
       titulo: form.titulo.value.trim(),
       preco: Number(form.preco.value),
       categoria: form.categoria.value,
       curso: form.curso.value,
       estado: form.estado.value,
-      foto: urlDaFoto,
       descricao: form.descricao.value.trim(),
-    });
+    };
 
-    form.reset();
-    form.classList.remove("was-validated");
-    avisar("Anúncio publicado com sucesso!");
-    mostrarView("feed");
+    // Se escolheu uma foto, envia ela primeiro e guarda o endereço.
+    // (Editando sem escolher foto, a foto antiga continua.)
+    const arquivo = form.foto.files[0];
+    if (arquivo !== undefined) {
+      dados.foto = await enviarFoto(arquivo);
+    }
+
+    if (idEmEdicao === null) {
+      await api("POST", "/api/anuncios", dados);
+      avisar("Anúncio publicado com sucesso!");
+      limparFormulario();
+      mostrarView("feed");
+    } else {
+      await api("PUT", "/api/anuncios/" + idEmEdicao, dados);
+      avisar("Anúncio atualizado!");
+      limparFormulario();
+      mostrarView("meus");
+    }
   } catch (e) {
     avisar(e.message, true);
   }

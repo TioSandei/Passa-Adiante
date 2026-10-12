@@ -111,7 +111,7 @@
     <section id="view-meus" class="d-none">
       <h1 class="h3 mb-3">Meus anúncios</h1>
       <p class="text-secondary">
-        Anúncios que você criou. Aqui dá para marcar como vendido ou apagar.
+        Anúncios que você criou. Aqui dá para editar, marcar como vendido ou apagar.
       </p>
       <div id="lista-meus" class="row g-3"></div>
       <div id="meus-vazio" class="text-center text-secondary py-5 d-none">
@@ -122,7 +122,7 @@
 
     <!-- ================= VIEW: NOVO ANÚNCIO ================= -->
     <section id="view-novo" class="d-none">
-      <h1 class="h3 mb-3">Novo anúncio</h1>
+      <h1 class="h3 mb-3" id="titulo-formulario">Novo anúncio</h1>
 
       <form id="form-anuncio" class="row g-3" novalidate>
         <div class="col-12">
@@ -179,7 +179,8 @@
         <div class="col-12 col-md-8">
           <label class="form-label">Foto do item</label>
           <input name="foto" type="file" accept="image/*" class="form-control" />
-          <div class="form-text">Sem foto? Deixe em branco que usamos uma imagem padrão.</div>
+          <div class="form-text">Sem foto? Deixe em branco que usamos uma imagem padrão.
+            Ao editar, deixe em branco para manter a foto atual.</div>
         </div>
 
         <div class="col-12">
@@ -194,7 +195,7 @@
         </p>
 
         <div class="col-12 d-flex gap-2">
-          <button type="submit" class="btn btn-success">
+          <button type="submit" class="btn btn-success" id="botao-publicar">
             <i class="bi bi-check-lg"></i> Publicar anúncio
           </button>
           <button type="button" class="btn btn-outline-secondary" data-view="feed">Cancelar</button>
