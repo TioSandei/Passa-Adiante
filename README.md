@@ -8,17 +8,14 @@ Projeto acadêmico dividido em 3 camadas ao longo das entregas:
 
 ---
 
-## Alunos do grupo
+## Aluno
 
-- Nome 1 — RA 000000
-- Nome 2 — RA 000000
-- (até 7)
+- Guilherme da Silva — RA 2403333
 
 ## Links
 
-- **Board do projeto:** https://trello.com/... (preencher)
-- **Repositório GitHub:** https://github.com/... (preencher)
-- **Vídeo da 1ª AC:** https://... (preencher)
+- **Board do projeto:** https://github.com/users/TioSandei/projects/2
+- **Vídeo da 1ª AC:** https://youtu.be/aUvHzK8mhVU
 
 ---
 
