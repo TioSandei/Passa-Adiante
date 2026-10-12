@@ -61,16 +61,74 @@ frontend/
 
 ---
 
+## 2ª AC — Back-end (entrega 13/10)
+
+API REST em **Python + Flask**. O front agora busca e grava os anúncios no
+servidor com `fetch()`. Os dados ficam **em listas na memória do Python**
+(ao desligar o servidor, voltam aos exemplos) — o banco de dados entra na 3ª AC.
+
+### Como executar
+
+Precisa do **Python 3** instalado (https://www.python.org/downloads/ — marque
+*"Add python.exe to PATH"* na instalação).
+
+```bash
+cd backend
+pip install -r requirements.txt
+python app.py
+```
+
+Depois abra **http://localhost:5000** no navegador.
+(Não abra mais o `index.html` com dois cliques: a página precisa do servidor.)
+
+Contas de teste (senha `123456`): `marina@email.com`, `rafael@email.com`, `beatriz@email.com`.
+
+### Rotas da API
+
+| Método | Rota | Login? | O que faz |
+|---|---|---|---|
+| GET | `/api/teste` | não | Rota de teste ("API funcionando") |
+| POST | `/api/alunos` | não | Cadastro de aluno (`nome, email, senha, curso, contato`) |
+| POST | `/api/login` | não | Login (`email, senha`) → devolve um `token` |
+| GET | `/api/anuncios?busca=&categoria=&curso=` | não | Lista anúncios com filtros |
+| GET | `/api/anuncios/<id>` | não | Detalhe de um anúncio |
+| POST | `/api/anuncios` | sim | Cria anúncio (o dono é quem está logado) |
+| PUT | `/api/anuncios/<id>` | sim, dono | Edita / marca como vendido (`{"vendido": true}`) |
+| DELETE | `/api/anuncios/<id>` | sim, dono | Apaga anúncio |
+| POST | `/api/upload` | sim | Upload de foto (campo `foto`) → devolve a `url` |
+
+**Login com token:** ao entrar, o servidor gera um código aleatório (token) e
+o front manda ele em todo pedido no cabeçalho `Authorization: Bearer <token>`.
+Assim o servidor sabe quem é o aluno. A senha é guardada como *hash*
+(embaralhada), nunca em texto puro.
+
+**Códigos de resposta usados:** `200` ok · `201` criado · `400` dado inválido ·
+`401` sem login · `403` não é o dono · `404` não encontrado · `409` e-mail já cadastrado.
+
+### Estrutura
+
+```
+backend/
+├── app.py            → servidor Flask: rotas da API + entrega o front-end
+├── requirements.txt  → bibliotecas Python (Flask)
+└── uploads/          → fotos enviadas (criada automaticamente)
+frontend/
+├── index.html        → telas (feed, meus anúncios, novo anúncio, login/cadastro)
+├── style.css
+└── app.js            → fetch() na API, login, filtros, formulários
+```
+
+---
+
 ## Próximas entregas (planejado)
 
 | Entrega | Camada | O que entra |
 |---|---|---|
-| 2ª AC (13/10) | Back-end | API REST em Python/Flask: cadastro/login, CRUD de anúncio, upload de foto, status |
 | 3ª AC (08/11) | Banco | PostgreSQL: aluno ↔ anúncio ↔ categoria; favoritos; consultas com JOIN; relatório |
 | Final | Integração | Front + back + banco juntos + chat OU avaliação do vendedor |
 
 ## Tecnologias
 
 - **Front:** HTML, CSS, JavaScript puro, Bootstrap 5
-- **Back (previsto):** Python + Flask
+- **Back:** Python + Flask
 - **Banco (previsto):** SQLite → PostgreSQL

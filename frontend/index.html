@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Passa Adiante — Sebo Virtual da Faculdade</title>
 
-  <!-- Bootstrap -->
+  <!-- Bootstrap (CSS pronto, deixa tudo bonito sem escrever muito CSS) -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
     rel="stylesheet" />
@@ -38,6 +38,15 @@
             <button class="btn btn-success btn-sm" data-view="novo">
               <i class="bi bi-plus-lg"></i> Anunciar
             </button>
+          </li>
+          <!-- Aparece quando NÃO há ninguém logado -->
+          <li class="nav-item" id="nav-entrar">
+            <a class="nav-link" href="#" data-view="login"><i class="bi bi-box-arrow-in-right"></i> Entrar</a>
+          </li>
+          <!-- Aparece quando há alguém logado -->
+          <li class="nav-item d-none" id="nav-logado">
+            <span class="navbar-text me-2" id="nome-logado"></span>
+            <button class="btn btn-outline-light btn-sm" id="botao-sair">Sair</button>
           </li>
         </ul>
       </div>
@@ -168,9 +177,8 @@
         </div>
 
         <div class="col-12 col-md-8">
-          <label class="form-label">URL da foto</label>
-          <input name="foto" type="url" class="form-control"
-                 placeholder="https://... (opcional)" />
+          <label class="form-label">Foto do item</label>
+          <input name="foto" type="file" accept="image/*" class="form-control" />
           <div class="form-text">Sem foto? Deixe em branco que usamos uma imagem padrão.</div>
         </div>
 
@@ -181,17 +189,9 @@
           <div class="invalid-feedback">Escreva uma descrição.</div>
         </div>
 
-        <div class="col-12 col-md-6">
-          <label class="form-label">Seu nome *</label>
-          <input name="autor" type="text" class="form-control" required placeholder="Como te chamar" />
-          <div class="invalid-feedback">Informe seu nome.</div>
-        </div>
-
-        <div class="col-12 col-md-6">
-          <label class="form-label">Contato (WhatsApp / e-mail) *</label>
-          <input name="contato" type="text" class="form-control" required placeholder="(00) 00000-0000" />
-          <div class="invalid-feedback">Informe um contato.</div>
-        </div>
+        <p class="col-12 small text-secondary mb-0">
+          Seu nome e contato são pegos do seu cadastro.
+        </p>
 
         <div class="col-12 d-flex gap-2">
           <button type="submit" class="btn btn-success">
@@ -200,6 +200,80 @@
           <button type="button" class="btn btn-outline-secondary" data-view="feed">Cancelar</button>
         </div>
       </form>
+    </section>
+
+    <!-- ================= VIEW: LOGIN / CADASTRO ================= -->
+    <section id="view-login" class="d-none">
+      <div class="row g-4">
+
+        <!-- Login -->
+        <div class="col-12 col-lg-5">
+          <div class="card p-4 h-100">
+            <h1 class="h4 mb-3">Entrar</h1>
+            <form id="form-login" class="d-grid gap-3" novalidate>
+              <div>
+                <label class="form-label">E-mail</label>
+                <input name="email" type="email" class="form-control" required />
+                <div class="invalid-feedback">Informe seu e-mail.</div>
+              </div>
+              <div>
+                <label class="form-label">Senha</label>
+                <input name="senha" type="password" class="form-control" required />
+                <div class="invalid-feedback">Informe sua senha.</div>
+              </div>
+              <button type="submit" class="btn btn-dark">Entrar</button>
+              <p class="small text-secondary mb-0">
+                Teste: <code>marina@email.com</code> / senha <code>123456</code>
+              </p>
+            </form>
+          </div>
+        </div>
+
+        <!-- Cadastro -->
+        <div class="col-12 col-lg-7">
+          <div class="card p-4 h-100">
+            <h1 class="h4 mb-3">Criar conta de aluno</h1>
+            <form id="form-cadastro" class="row g-3" novalidate>
+              <div class="col-12 col-md-6">
+                <label class="form-label">Nome *</label>
+                <input name="nome" type="text" class="form-control" required />
+                <div class="invalid-feedback">Informe seu nome.</div>
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label">Curso *</label>
+                <select name="curso" class="form-select" required>
+                  <option value="">Selecione...</option>
+                  <option>ADS</option>
+                  <option>Engenharia</option>
+                  <option>Direito</option>
+                  <option>Administração</option>
+                  <option>Medicina</option>
+                </select>
+                <div class="invalid-feedback">Escolha seu curso.</div>
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label">E-mail *</label>
+                <input name="email" type="email" class="form-control" required />
+                <div class="invalid-feedback">Informe um e-mail válido.</div>
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label">Senha *</label>
+                <input name="senha" type="password" minlength="6" class="form-control" required />
+                <div class="invalid-feedback">Mínimo de 6 caracteres.</div>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Contato (WhatsApp / e-mail) *</label>
+                <input name="contato" type="text" class="form-control" required placeholder="(00) 00000-0000" />
+                <div class="invalid-feedback">Informe um contato.</div>
+              </div>
+              <div class="col-12">
+                <button type="submit" class="btn btn-success">Criar conta</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+      </div>
     </section>
 
   </main>
@@ -214,7 +288,7 @@
   </div>
 
   <footer class="text-center text-secondary small py-4">
-    Passa Adiante · Projeto acadêmico · 1ª AC (Front-end) · Dados salvos no navegador
+    Passa Adiante · Projeto acadêmico · 2ª AC (Back-end) · Dados vindos da API Flask
   </footer>
 
   <!-- Toast de feedback -->

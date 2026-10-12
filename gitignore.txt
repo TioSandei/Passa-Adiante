@@ -1,0 +1,9 @@
+node_modules/
+.DS_Store
+
+# Python
+__pycache__/
+.venv/
+
+# Fotos enviadas pelos usuários (geradas ao rodar o servidor)
+backend/uploads/

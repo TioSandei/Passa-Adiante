@@ -1,96 +1,131 @@
 /* ============================================================
    Passa Adiante — Sebo Virtual da Faculdade
-   1ª AC: apenas FRONT-END.
+   2ª AC: front-end CONSUMINDO A API (back-end em Flask).
 
    COMO A PÁGINA FUNCIONA (resumo para a apresentação):
-   1. O navegador abre o index.html.
-   2. Este arquivo (app.js) guarda a lista de anúncios numa variável.
-   3. Essa lista também é salva no localStorage do navegador,
-      que funciona como um "banco de dados falso".
-   4. Funções "desenham" os anúncios na tela como cards.
+   1. O servidor Flask (backend/app.py) entrega esta página.
+   2. Para ler ou mudar anúncios, este arquivo faz pedidos
+      ao servidor com fetch() — ex.: GET /api/anuncios.
+   3. O servidor responde em JSON e as funções "desenham"
+      os anúncios na tela como cards.
+   4. No navegador só guardamos a SESSÃO (token do login),
+      os anúncios ficam no servidor.
    ============================================================ */
 
-// Nome da "gaveta" onde o navegador guarda os anúncios
-const CHAVE = "passa-adiante:anuncios";
+// Nome da "gaveta" onde o navegador guarda o login
+const CHAVE_SESSAO = "passa-adiante:sessao";
 
 // Imagem usada quando o anúncio não tem foto
 const FOTO_PADRAO = "https://placehold.co/400x300?text=Sem+foto";
 
-/* ---------- Dados de exemplo (aparecem no primeiro acesso) ---------- */
-const EXEMPLOS = [
-  {
-    id: 1,
-    titulo: "Livro de Cálculo A",
-    preco: 45,
-    categoria: "Livro",
-    curso: "Engenharia",
-    estado: "Usado",
-    foto: "https://placehold.co/400x300?text=Calculo+A",
-    descricao: "Livro com algumas anotações a lápis. Capa em bom estado.",
-    autor: "Marina",
-    contato: "(47) 99999-1111",
-    vendido: false,
-  },
-  {
-    id: 2,
-    titulo: "Apostila de Lógica de Programação",
-    preco: 0,
-    categoria: "Apostila",
-    curso: "ADS",
-    estado: "Seminovo",
-    foto: "https://placehold.co/400x300?text=Logica",
-    descricao: "Doação! Apostila impressa, usei só um semestre.",
-    autor: "Rafael",
-    contato: "rafael@email.com",
-    vendido: false,
-  },
-  {
-    id: 3,
-    titulo: "Calculadora HP 12C",
-    preco: 180,
-    categoria: "Eletrônico",
-    curso: "Administração",
-    estado: "Seminovo",
-    foto: "https://placehold.co/400x300?text=HP+12C",
-    descricao: "Funcionando perfeitamente, acompanha capa e manual.",
-    autor: "Beatriz",
-    contato: "(47) 98888-2222",
-    vendido: true,
-  },
-];
-
 /* ============================================================
-   PASSO 1 - Carregar e salvar os anúncios no navegador
+   PASSO 1 - Sessão (quem está logado)
    ============================================================ */
 
-// Lê os anúncios que estão salvos no navegador.
-// Se não houver nada salvo, usa a lista de exemplos.
-function carregarAnuncios() {
-  const textoSalvo = localStorage.getItem(CHAVE);
+// Lê o login salvo. Formato: { token: "...", aluno: { id, nome, ... } }
+function carregarSessao() {
+  const texto = localStorage.getItem(CHAVE_SESSAO);
+  if (texto === null) return null;
+  return JSON.parse(texto);
+}
 
-  if (textoSalvo === null) {
-    // Primeira vez que a pessoa abre a página: salva os exemplos.
-    localStorage.setItem(CHAVE, JSON.stringify(EXEMPLOS));
-    return EXEMPLOS;
+let sessao = carregarSessao();
+
+function entrar(novaSessao) {
+  sessao = novaSessao;
+  localStorage.setItem(CHAVE_SESSAO, JSON.stringify(sessao));
+  atualizarNavbar();
+}
+
+function sair() {
+  sessao = null;
+  localStorage.removeItem(CHAVE_SESSAO);
+  atualizarNavbar();
+}
+
+// Mostra "Entrar" ou "Olá, Fulano + Sair" na navbar
+function atualizarNavbar() {
+  if (sessao === null) {
+    document.getElementById("nav-entrar").classList.remove("d-none");
+    document.getElementById("nav-logado").classList.add("d-none");
+  } else {
+    document.getElementById("nav-entrar").classList.add("d-none");
+    document.getElementById("nav-logado").classList.remove("d-none");
+    document.getElementById("nome-logado").textContent = "Olá, " + sessao.aluno.nome;
   }
-
-  // O localStorage só guarda texto, então convertemos o texto de volta em lista.
-  return JSON.parse(textoSalvo);
 }
 
-// Salva a lista atual de anúncios no navegador (como texto).
-function salvarAnuncios(lista) {
-  localStorage.setItem(CHAVE, JSON.stringify(lista));
-}
-
-// Esta variável é a nossa "lista de anúncios" enquanto a página está aberta.
-let anuncios = carregarAnuncios();
+document.getElementById("botao-sair").addEventListener("click", function () {
+  sair();
+  avisar("Você saiu da conta.");
+  mostrarView("feed");
+});
 
 /* ============================================================
-   PASSO 2 - Trocar de tela (feed / meus anúncios / novo)
+   PASSO 2 - Conversar com a API
+   Uma função só para todos os pedidos, assim não repetimos
+   o mesmo código em todo lugar.
+   ============================================================ */
+
+// metodo: "GET", "POST", "PUT" ou "DELETE"
+// rota:   ex.: "/api/anuncios"
+// corpo:  objeto a enviar (opcional)
+async function api(metodo, rota, corpo) {
+  const opcoes = { method: metodo, headers: {} };
+
+  // Se estiver logado, manda o token para o servidor saber quem é
+  if (sessao !== null) {
+    opcoes.headers["Authorization"] = "Bearer " + sessao.token;
+  }
+
+  // Se tiver dados para enviar, manda como JSON
+  if (corpo !== undefined) {
+    opcoes.headers["Content-Type"] = "application/json";
+    opcoes.body = JSON.stringify(corpo);
+  }
+
+  const resposta = await fetch(rota, opcoes);
+  const dados = await resposta.json();
+
+  // 401 = token inválido (ex.: o servidor foi reiniciado). Desloga.
+  if (resposta.status === 401 && sessao !== null) {
+    sair();
+  }
+
+  // Qualquer status de erro (400, 401, 403, 404...) vira um erro aqui
+  if (!resposta.ok) {
+    throw new Error(dados.erro);
+  }
+  return dados;
+}
+
+// Envia o arquivo de foto e devolve o endereço onde ele ficou salvo
+async function enviarFoto(arquivo) {
+  // Arquivos não vão como JSON, e sim como "FormData" (formulário)
+  const formulario = new FormData();
+  formulario.append("foto", arquivo);
+
+  const resposta = await fetch("/api/upload", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + sessao.token },
+    body: formulario,
+  });
+  const dados = await resposta.json();
+  if (!resposta.ok) throw new Error(dados.erro);
+  return dados.url;
+}
+
+/* ============================================================
+   PASSO 3 - Trocar de tela (feed / meus / novo / login)
    ============================================================ */
 
 function mostrarView(nome) {
+  // "Meus anúncios" e "Anunciar" exigem login
+  if ((nome === "meus" || nome === "novo") && sessao === null) {
+    avisar("Entre na sua conta primeiro.", true);
+    nome = "login";
+  }
+
   // Esconde todas as telas
   const telas = document.querySelectorAll("main > section");
   for (let i = 0; i < telas.length; i++) {
@@ -117,7 +152,7 @@ for (let i = 0; i < botoesDeNavegacao.length; i++) {
 }
 
 /* ============================================================
-   PASSO 3 - Montar o card de um anúncio
+   PASSO 4 - Montar o card de um anúncio
    ============================================================ */
 
 // Transforma o preço num texto bonito
@@ -147,7 +182,7 @@ function cardAnuncio(anuncio, comBotoes) {
     botoes =
       '<div class="d-flex gap-2 mt-2">' +
       '  <button class="btn btn-sm btn-outline-success flex-grow-1" data-acao="vender" data-id="' +
-      anuncio.id + '">' + textoBotao + "</button>" +
+      anuncio.id + '" data-vendido="' + anuncio.vendido + '">' + textoBotao + "</button>" +
       '  <button class="btn btn-sm btn-outline-danger" data-acao="apagar" data-id="' +
       anuncio.id + '"><i class="bi bi-trash"></i></button>' +
       "</div>";
@@ -182,36 +217,29 @@ function cardAnuncio(anuncio, comBotoes) {
 }
 
 /* ============================================================
-   PASSO 4 - Tela FEED (com busca e filtros)
+   PASSO 5 - Tela FEED (com busca e filtros)
+   Agora quem filtra é o SERVIDOR: mandamos os filtros na URL.
+   Ex.: /api/anuncios?busca=calc&categoria=Livro&curso=
    ============================================================ */
 
-// Devolve só os anúncios que passam pela busca e pelos filtros
-function anunciosFiltrados() {
-  const texto = document.getElementById("busca").value.toLowerCase();
-  const categoria = document.getElementById("filtro-categoria").value;
-  const curso = document.getElementById("filtro-curso").value;
-
-  const resultado = [];
-  for (let i = 0; i < anuncios.length; i++) {
-    const a = anuncios[i];
-
-    const combinaTexto = texto === "" || a.titulo.toLowerCase().includes(texto);
-    const combinaCategoria = categoria === "" || a.categoria === categoria;
-    const combinaCurso = curso === "" || a.curso === curso;
-
-    if (combinaTexto && combinaCategoria && combinaCurso) {
-      resultado.push(a);
-    }
-  }
-  return resultado;
-}
-
-function desenharFeed() {
+async function desenharFeed() {
   const lista = document.getElementById("lista-anuncios");
   const aviso = document.getElementById("vazio");
   const contador = document.getElementById("contador");
 
-  const dados = anunciosFiltrados();
+  const filtros = new URLSearchParams({
+    busca: document.getElementById("busca").value,
+    categoria: document.getElementById("filtro-categoria").value,
+    curso: document.getElementById("filtro-curso").value,
+  });
+
+  let dados;
+  try {
+    dados = await api("GET", "/api/anuncios?" + filtros.toString());
+  } catch (e) {
+    contador.textContent = "Não foi possível falar com o servidor. Ele está ligado? (python app.py)";
+    return;
+  }
 
   lista.innerHTML = "";
   for (let i = 0; i < dados.length; i++) {
@@ -240,19 +268,26 @@ document.getElementById("limpar-filtros").addEventListener("click", function () 
 });
 
 /* ============================================================
-   PASSO 5 - Tela MEUS ANÚNCIOS
-   Como não há login, "meus" são os anúncios criados nesta
-   máquina (eles têm o campo meuAnuncio = true).
+   PASSO 6 - Tela MEUS ANÚNCIOS
+   "Meus" são os anúncios cujo aluno_id é o do aluno logado.
    ============================================================ */
 
-function desenharMeus() {
+async function desenharMeus() {
   const lista = document.getElementById("lista-meus");
   const aviso = document.getElementById("meus-vazio");
 
+  let todos;
+  try {
+    todos = await api("GET", "/api/anuncios");
+  } catch (e) {
+    avisar(e.message, true);
+    return;
+  }
+
   const meus = [];
-  for (let i = 0; i < anuncios.length; i++) {
-    if (anuncios[i].meuAnuncio === true) {
-      meus.push(anuncios[i]);
+  for (let i = 0; i < todos.length; i++) {
+    if (todos[i].aluno_id === sessao.aluno.id) {
+      meus.push(todos[i]);
     }
   }
 
@@ -269,52 +304,44 @@ function desenharMeus() {
 }
 
 // Clique nos botões "marcar vendido" / "apagar"
-document.getElementById("lista-meus").addEventListener("click", function (evento) {
+document.getElementById("lista-meus").addEventListener("click", async function (evento) {
   const botao = evento.target.closest("[data-acao]");
   if (botao === null) return; // não clicou num botão
 
-  const id = Number(botao.dataset.id);
+  const id = botao.dataset.id;
 
-  // Acha o anúncio clicado dentro da lista
-  let anuncioClicado = null;
-  for (let i = 0; i < anuncios.length; i++) {
-    if (anuncios[i].id === id) anuncioClicado = anuncios[i];
-  }
-
-  if (botao.dataset.acao === "vender") {
-    anuncioClicado.vendido = !anuncioClicado.vendido; // inverte true/false
-    salvarAnuncios(anuncios);
-    desenharMeus();
-    avisar(anuncioClicado.vendido ? "Anúncio marcado como vendido." : "Anúncio reativado.");
-  }
-
-  if (botao.dataset.acao === "apagar") {
-    if (!confirm("Apagar este anúncio?")) return;
-
-    // Monta uma nova lista sem o anúncio apagado
-    const novaLista = [];
-    for (let i = 0; i < anuncios.length; i++) {
-      if (anuncios[i].id !== id) novaLista.push(anuncios[i]);
+  try {
+    if (botao.dataset.acao === "vender") {
+      const estavaVendido = botao.dataset.vendido === "true";
+      // PUT só com o campo que muda: inverte true/false
+      await api("PUT", "/api/anuncios/" + id, { vendido: !estavaVendido });
+      avisar(estavaVendido ? "Anúncio reativado." : "Anúncio marcado como vendido.");
     }
-    anuncios = novaLista;
 
-    salvarAnuncios(anuncios);
+    if (botao.dataset.acao === "apagar") {
+      if (!confirm("Apagar este anúncio?")) return;
+      await api("DELETE", "/api/anuncios/" + id);
+      avisar("Anúncio apagado.");
+    }
+
     desenharMeus();
-    avisar("Anúncio apagado.");
+  } catch (e) {
+    avisar(e.message, true);
   }
 });
 
 /* ============================================================
-   PASSO 6 - Modal de detalhe do anúncio
+   PASSO 7 - Modal de detalhe do anúncio
    ============================================================ */
 
-function abrirDetalhe(id) {
-  // Acha o anúncio pelo id
-  let anuncio = null;
-  for (let i = 0; i < anuncios.length; i++) {
-    if (anuncios[i].id === id) anuncio = anuncios[i];
+async function abrirDetalhe(id) {
+  let anuncio;
+  try {
+    anuncio = await api("GET", "/api/anuncios/" + id);
+  } catch (e) {
+    avisar(e.message, true);
+    return;
   }
-  if (anuncio === null) return;
 
   const seloVendido = anuncio.vendido
     ? '<span class="badge text-bg-danger">VENDIDO</span>'
@@ -349,12 +376,12 @@ function abrirDetalhe(id) {
 }
 
 /* ============================================================
-   PASSO 7 - Formulário de novo anúncio
+   PASSO 8 - Formulário de novo anúncio
    ============================================================ */
 
 const form = document.getElementById("form-anuncio");
 
-form.addEventListener("submit", function (evento) {
+form.addEventListener("submit", async function (evento) {
   evento.preventDefault();
 
   // Validação visual do Bootstrap (mostra os campos obrigatórios vazios)
@@ -363,43 +390,118 @@ form.addEventListener("submit", function (evento) {
     return;
   }
 
-  // Lê cada campo do formulário pelo atributo "name"
-  const novo = {
-    id: Date.now(), // número único baseado no horário atual
-    titulo: form.titulo.value.trim(),
-    preco: Number(form.preco.value),
-    categoria: form.categoria.value,
-    curso: form.curso.value,
-    estado: form.estado.value,
-    foto: form.foto.value.trim(),
-    descricao: form.descricao.value.trim(),
-    autor: form.autor.value.trim(),
-    contato: form.contato.value.trim(),
-    vendido: false,
-    meuAnuncio: true, // marca que fui eu que criei
-  };
+  try {
+    // 1º) Se escolheu uma foto, envia ela primeiro e pega o endereço
+    let urlDaFoto = "";
+    const arquivo = form.foto.files[0];
+    if (arquivo !== undefined) {
+      urlDaFoto = await enviarFoto(arquivo);
+    }
 
-  anuncios.push(novo);
-  salvarAnuncios(anuncios);
+    // 2º) Envia os dados do anúncio. Autor e contato o servidor
+    //     descobre sozinho pelo token de quem está logado.
+    await api("POST", "/api/anuncios", {
+      titulo: form.titulo.value.trim(),
+      preco: Number(form.preco.value),
+      categoria: form.categoria.value,
+      curso: form.curso.value,
+      estado: form.estado.value,
+      foto: urlDaFoto,
+      descricao: form.descricao.value.trim(),
+    });
 
-  form.reset();
-  form.classList.remove("was-validated");
-  avisar("Anúncio publicado com sucesso!");
-  mostrarView("feed");
+    form.reset();
+    form.classList.remove("was-validated");
+    avisar("Anúncio publicado com sucesso!");
+    mostrarView("feed");
+  } catch (e) {
+    avisar(e.message, true);
+  }
 });
 
 /* ============================================================
-   PASSO 8 - Mensagem de aviso (toast) no canto da tela
+   PASSO 9 - Login e cadastro
    ============================================================ */
 
-function avisar(mensagem) {
+const formLogin = document.getElementById("form-login");
+
+formLogin.addEventListener("submit", async function (evento) {
+  evento.preventDefault();
+  if (!formLogin.checkValidity()) {
+    formLogin.classList.add("was-validated");
+    return;
+  }
+
+  try {
+    // O servidor responde { token, aluno }
+    const resposta = await api("POST", "/api/login", {
+      email: formLogin.email.value,
+      senha: formLogin.senha.value,
+    });
+    entrar(resposta);
+    formLogin.reset();
+    formLogin.classList.remove("was-validated");
+    avisar("Bem-vindo(a), " + resposta.aluno.nome + "!");
+    mostrarView("feed");
+  } catch (e) {
+    avisar(e.message, true);
+  }
+});
+
+const formCadastro = document.getElementById("form-cadastro");
+
+formCadastro.addEventListener("submit", async function (evento) {
+  evento.preventDefault();
+  if (!formCadastro.checkValidity()) {
+    formCadastro.classList.add("was-validated");
+    return;
+  }
+
+  const email = formCadastro.email.value;
+  const senha = formCadastro.senha.value;
+
+  try {
+    // 1º) Cria a conta
+    await api("POST", "/api/alunos", {
+      nome: formCadastro.nome.value,
+      curso: formCadastro.curso.value,
+      email: email,
+      senha: senha,
+      contato: formCadastro.contato.value,
+    });
+
+    // 2º) Já faz o login com a conta nova
+    const resposta = await api("POST", "/api/login", { email: email, senha: senha });
+    entrar(resposta);
+    formCadastro.reset();
+    formCadastro.classList.remove("was-validated");
+    avisar("Conta criada! Você já está logado(a).");
+    mostrarView("feed");
+  } catch (e) {
+    avisar(e.message, true);
+  }
+});
+
+/* ============================================================
+   PASSO 10 - Mensagem de aviso (toast) no canto da tela
+   Verde para sucesso, vermelho quando "ehErro" for true.
+   ============================================================ */
+
+function avisar(mensagem, ehErro) {
+  const caixa = document.getElementById("toast");
+  if (ehErro) {
+    caixa.classList.replace("text-bg-success", "text-bg-danger");
+  } else {
+    caixa.classList.replace("text-bg-danger", "text-bg-success");
+  }
   document.getElementById("toast-msg").textContent = mensagem;
-  const toast = new bootstrap.Toast(document.getElementById("toast"), { delay: 2500 });
+  const toast = new bootstrap.Toast(caixa, { delay: 2500 });
   toast.show();
 }
 
 /* ============================================================
-   INÍCIO - quando a página abre, mostra o feed
+   INÍCIO - quando a página abre, ajusta a navbar e mostra o feed
    ============================================================ */
 
+atualizarNavbar();
 mostrarView("feed");
