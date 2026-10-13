@@ -2,7 +2,7 @@
    Passa Adiante — Sebo Virtual da Faculdade
    2ª AC: front-end CONSUMINDO A API (back-end em Flask).
 
-   COMO A PÁGINA FUNCIONA (resumo para a apresentação):
+   COMO A PÁGINA FUNCIONA (resumo):
    1. O servidor Flask (backend/app.py) entrega esta página.
    2. Para ler ou mudar anúncios, este arquivo faz pedidos
       ao servidor com fetch() — ex.: GET /api/anuncios.

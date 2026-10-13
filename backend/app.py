@@ -3,7 +3,7 @@
 Passa Adiante — Sebo Virtual da Faculdade
 2ª AC: BACK-END (API REST em Python + Flask)
 
-COMO O BACK-END FUNCIONA (resumo para a apresentação):
+COMO O BACK-END FUNCIONA (resumo):
 1. Rodamos "python app.py" e o Flask liga um servidor em
    http://localhost:5000
 2. O navegador abre essa página e recebe o front-end
